@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"spot_sync/internal/auth"
+	// "fmt"
 	"net/http"
+	"spot_sync/internal/auth"
 	"strings"
 
 	"github.com/labstack/echo/v5"
@@ -11,7 +12,8 @@ import (
 func AuthMiddleware(jwtService auth.JWTService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
-
+// fmt.Println("Authorization:", c.Request().Header.Get("Authorization"))
+// fmt.Printf("Headers: %+v\n", c.Request().Header)
 			// extract token from authorization header
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
@@ -44,8 +46,26 @@ func AuthMiddleware(jwtService auth.JWTService) echo.MiddlewareFunc {
 			c.Set("user_id", claims.UserID)
 			c.Set("user_email", claims.Email)
 			c.Set("user_name", claims.Name)
+			c.Set("user_role", claims.Role)
 
 			return next(c)
 		}
 	}
 }
+func AdminMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+
+			role, ok := c.Get("user_role").(string)
+			if !ok || strings.ToLower(role) != "admin" {
+				return c.JSON(http.StatusForbidden, map[string]string{
+					"error": "forbidden: admin access required",
+				})
+			}
+
+			return next(c)
+		}
+	}
+}	
+
+		

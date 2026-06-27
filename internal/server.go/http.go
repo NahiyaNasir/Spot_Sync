@@ -2,11 +2,10 @@ package server
 
 import (
 	"fmt"
-
-	"spot_sync/internal/config"
-	"spot_sync/internal/user"
-
 	"net/http"
+	"spot_sync/internal/config"
+	"spot_sync/internal/parkingzone"
+	"spot_sync/internal/user"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
@@ -27,7 +26,7 @@ func (cv *CustomValidator) Validate(i any) error {
 }
 
 func Start(db *gorm.DB, cfg *config.Config) {
-	db.AutoMigrate(&user.User{})
+	db.AutoMigrate(&user.User{}, &parkingzone.ParkingZone{})
 
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
@@ -38,7 +37,9 @@ func Start(db *gorm.DB, cfg *config.Config) {
 	})
 
 	// user routes
+
 	user.RegisterRoutes(e, db)
+	parkingzone.RegisterRoutes(e, db)
 
 	port := fmt.Sprintf(":%s", cfg.Port)
 	if err := e.Start(port); err != nil {

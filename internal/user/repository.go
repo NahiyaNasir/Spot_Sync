@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateUser(user *User) error
 	GetUserByEmail(email string) (*User, error)
+	GetAllUsers() ([]User, error)
 	Update(user *User) error
 	Delete(id uint) error
 }
@@ -43,7 +44,14 @@ func(r *repository) GetUserByEmail(email string)(*User,error){
 
 	return &user, nil
  }
-
+ func (r *repository) GetAllUsers() ([]User, error) {
+	var users []User
+	result := r.db.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
 
 func (r *repository) Update(u *User) error {
 	return r.db.Save(u).Error

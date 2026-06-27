@@ -98,6 +98,17 @@ func (h *Handler) GetMe(c *echo.Context) error {
 	})
 }
 
+ func (h *Handler) GetAllUsers(c *echo.Context) error {
+	users, err := h.service.GetAllUsers()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to retrieve users",
+			Details: err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, users)
+}
 
 func (h *Handler) Update(c *echo.Context) error {
 	_ = c.Param("id")

@@ -21,7 +21,8 @@ func NewService(repo Repository,jwtService auth.JWTService) *service {
 func (s *service) CreateUser(req *dto.RegisterUserRequest) (*dto.Response, error) {
 	 user :=User{
 	  Name: req.Name,
-	  Email: req.Email,}
+	  Email: req.Email,
+	Role: req.Role,}
 	  err := user.hashPassword(req.Password)
   if err != nil {
 	  return nil, err
@@ -34,6 +35,7 @@ func (s *service) CreateUser(req *dto.RegisterUserRequest) (*dto.Response, error
 	  ID: user.ID,
 	  Name: user.Name,
 	  Email: user.Email,
+	  Role: user.Role,
 	  CreatedAt: user.CreatedAt.String(),
   }
 
@@ -54,7 +56,7 @@ func (s *service) LoginUser(request *dto.LoginRequest)(*dto.Response, error) {
 		return nil, ErrInvalidCredentials
 	}
 	// generate token
-	token, err := s.jwtService.GenerateToken(user.ID, user.Email, user.Name)
+	token, err := s.jwtService.GenerateToken(user.ID, user.Email, user.Name, user.Role)
 	  fmt.Printf("DEBUG token: %q err: %v\n", token, err) // ← ADD
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
@@ -63,11 +65,29 @@ func (s *service) LoginUser(request *dto.LoginRequest)(*dto.Response, error) {
 		ID: user.ID,
 		Name: user.Name,
 		Email: user.Email,
+		Role:user.Role,
 		Token: token,
 		CreatedAt: user.CreatedAt.String(),
 	}, nil
 }
-
+  func(s*service) GetAllUsers() ([]dto.Response, error) {
+	users, err := s.repo.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+	var responses []dto.Response
+	for _, user := range users {
+		response := dto.Response{
+			ID: user.ID,
+			Name: user.Name,
+			Email: user.Email,
+			Role: user.Role,
+			CreatedAt: user.CreatedAt.String(),
+		}
+		responses = append(responses, response)
+	}
+	return responses, nil
+}
 
 func (s *service) Update(id uint, req dto.UpdateUserRequest) (*dto.Response, error) {
 	return nil, errors.New("not implemented")
