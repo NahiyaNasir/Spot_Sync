@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"spot_sync/internal/config"
 	"spot_sync/internal/parkingzone"
+	"spot_sync/internal/reservations"
 	"spot_sync/internal/user"
 
 	"github.com/go-playground/validator/v10"
@@ -26,7 +27,7 @@ func (cv *CustomValidator) Validate(i any) error {
 }
 
 func Start(db *gorm.DB, cfg *config.Config) {
-	db.AutoMigrate(&user.User{}, &parkingzone.ParkingZone{})
+	db.AutoMigrate(&user.User{}, &parkingzone.ParkingZone{}, &reservations.Reservation{})
 
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
@@ -40,6 +41,7 @@ func Start(db *gorm.DB, cfg *config.Config) {
 
 	user.RegisterRoutes(e, db)
 	parkingzone.RegisterRoutes(e, db)
+	reservations.RegisterRoutes(e, db)
 
 	port := fmt.Sprintf(":%s", cfg.Port)
 	if err := e.Start(port); err != nil {

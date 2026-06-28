@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
+        "gorm",
         "httpresponse",
+        "labstack",
         "parkingzone"
     ],
     "postman.settings.dotenv-detection-notification-visibility": false

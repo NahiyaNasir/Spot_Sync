@@ -11,11 +11,11 @@ import (
 func RegisterRoutes(e *echo.Echo, db *gorm.DB,) {
 	parkingRepository :=NewRepository(db)
 	jwtService := auth.NewJWTService("")
-	parkingService := NewService(parkingRepository, jwtService)
+	parkingService := NewService(parkingRepository, jwtService,db)
 	parkingHandler := NewHandler(parkingService)
 
 	api := e.Group("/api/v1/parking-zones")
-	api.POST("", parkingHandler.CreateParkingZone, middlewares.AuthMiddleware(jwtService), middlewares.AdminMiddleware())
+	api.POST("", parkingHandler.CreateParkingZone, middlewares.AuthMiddleware(jwtService), middlewares.RoleMiddleware("admin"))
 	api.GET("",parkingHandler.GetAllParkingZones)
 	api.GET("/:id",parkingHandler.GetParkingZoneByID)
 }

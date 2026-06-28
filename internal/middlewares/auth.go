@@ -12,8 +12,6 @@ import (
 func AuthMiddleware(jwtService auth.JWTService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
-// fmt.Println("Authorization:", c.Request().Header.Get("Authorization"))
-// fmt.Printf("Headers: %+v\n", c.Request().Header)
 			// extract token from authorization header
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
@@ -34,7 +32,6 @@ func AuthMiddleware(jwtService auth.JWTService) echo.MiddlewareFunc {
 			tokenString := parts[1]
 
 			// validate token
-
 			claims, err := jwtService.ValidateToken(tokenString)
 			if err != nil {
 				return c.JSON(http.StatusUnauthorized, map[string]string{
@@ -52,20 +49,38 @@ func AuthMiddleware(jwtService auth.JWTService) echo.MiddlewareFunc {
 		}
 	}
 }
-func AdminMiddleware() echo.MiddlewareFunc {
+// func AdminMiddleware() echo.MiddlewareFunc {
+// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c *echo.Context) error {
+
+// 			role, ok := c.Get("user_role").(string)
+// 			if !ok || strings.ToLower(role) != "admin" {
+// 				return c.JSON(http.StatusForbidden, map[string]string{
+// 					"error": "forbidden: admin access required",
+// 				})
+// 			}
+
+// 			return next(c)
+// 		}
+// 	}
+// }	
+
+func RoleMiddleware(roles ...string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
-
-			role, ok := c.Get("user_role").(string)
-			if !ok || strings.ToLower(role) != "admin" {
-				return c.JSON(http.StatusForbidden, map[string]string{
-					"error": "forbidden: admin access required",
-				})
+			userRole, ok := c.Get("user_role").(string)
+			if !ok {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Role not found")
 			}
 
-			return next(c)
+			for _, role := range roles {
+				if userRole == role {
+					return next(c)
+				}
+			}
+
+			return echo.NewHTTPError(http.StatusForbidden, "Access denied")
 		}
 	}
-}	
-
+}
 		
