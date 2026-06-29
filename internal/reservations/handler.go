@@ -27,15 +27,16 @@ func getCurrentUserID(c *echo.Context) (uint, bool) {
 func reservationErrorResponse(c *echo.Context, err error) error {
     if errors.Is(err, ErrReservationNotFound) {
         return c.JSON(http.StatusNotFound, httpresponse.ErrorResponse{
-            Code:    http.StatusNotFound,
+            Success: false,
             Message: "Reservation not found",
+            Errors:  "Reservation not found",
         })
     }
 
     return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-        Code:    http.StatusInternalServerError,
+        Success: false,
         Message: "Something went wrong",
-        Details: err.Error(),
+        Errors:  err.Error(),
     })
 }
 
@@ -43,34 +44,35 @@ func (h *Handler) CreateReservation(c *echo.Context) error {
     var req dto.CreateReservationRequest
     if err := c.Bind(&req); err != nil {
         return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-            Code:    http.StatusBadRequest,
+            Success: false,
             Message: "Invalid request body",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
     if err := c.Validate(&req); err != nil {
         return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-            Code:    http.StatusBadRequest,
+            Success: false,
             Message: "Validation failed",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
     raw := c.Get("user_id")
     if raw == nil {
         return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-            Code:    http.StatusUnauthorized,
+            Success: false,
             Message: "Unauthorized",
+            Errors:  "User not authenticated",
         })
     }
 
     userID, ok := raw.(uint)
     if !ok {
         return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-            Code:    http.StatusUnauthorized,
+            Success: false,
             Message: "Unauthorized",
-    
+            Errors:  "User not authenticated",
         })
             
         
@@ -79,34 +81,43 @@ func (h *Handler) CreateReservation(c *echo.Context) error {
     response, err := h.service.CreateReservation(userID, &req)
     if err != nil {
         return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-            Code:    http.StatusInternalServerError,
+            Success: false,
             Message: "Failed to create reservation",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
-    return c.JSON(http.StatusCreated, response)
+    return c.JSON(http.StatusCreated, httpresponse.SuccessResponse{
+        Success: true,
+        Message: "Reservation created successfully",
+        Data:    response,
+    })
 }
 
 func (h *Handler) GetAllReservations(c *echo.Context) error {
     responses, err := h.service.GetAllReservations()
     if err != nil {
         return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-            Code:    http.StatusInternalServerError,
+            Success: false,
             Message: "Failed to retrieve reservations",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
-    return c.JSON(http.StatusOK, responses)
+    return c.JSON(http.StatusOK, httpresponse.SuccessResponse{
+        Success: true,
+        Message: "Reservations retrieved successfully",
+        Data:    responses,
+    })
 }
 
 func (h *Handler) GetMyReservations(c *echo.Context) error {
 	userId, ok := getCurrentUserID(c)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-			Code:    http.StatusUnauthorized,
+			Success: false,
 			Message: "Unauthorized",
+			Errors:  "User not authenticated",
 		})
 	}
 
@@ -115,7 +126,11 @@ func (h *Handler) GetMyReservations(c *echo.Context) error {
 		return reservationErrorResponse(c, err)
 	}
 
-	return c.JSON(http.StatusOK, bookings)
+	return c.JSON(http.StatusOK, httpresponse.SuccessResponse{
+		Success: true,
+		Message: "Reservations retrieved successfully",
+		Data:    bookings,
+	})
 }
 
 
@@ -123,8 +138,9 @@ func (h *Handler) CancelReservation(c *echo.Context) error {
     raw := c.Get("user_id")
     if raw == nil {
         return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-            Code:    http.StatusUnauthorized,
+            Success: false,
             Message: "Unauthorized",
+            Errors:  "User not authenticated",
         })
     }
     userID := raw.(uint)
@@ -132,39 +148,44 @@ func (h *Handler) CancelReservation(c *echo.Context) error {
     reservationID, err := strconv.ParseUint(c.Param("id"), 10, 64)
     if err != nil {
         return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-            Code:    http.StatusBadRequest,
+            Success: false,
             Message: "Invalid reservation ID",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
     if err := h.service.CancelReservation(userID, uint(reservationID)); err != nil {
         if errors.Is(err, ErrReservationNotFound) {
             return c.JSON(http.StatusNotFound, httpresponse.ErrorResponse{
-                Code:    http.StatusNotFound,
+                Success: false,
                 Message: "Reservation not found",
+                Errors:  err.Error(),
             })
         }
         if errors.Is(err, ErrUnauthorized) {
             return c.JSON(http.StatusForbidden, httpresponse.ErrorResponse{
-                Code:    http.StatusForbidden,
+                Success: false,
                 Message: "You can only cancel your own reservations",
+                Errors:  err.Error(),
             })
         }
         if errors.Is(err, ErrAlreadyCancelled) {
             return c.JSON(http.StatusConflict, httpresponse.ErrorResponse{
-                Code:    http.StatusConflict,
+                Success: false,
                 Message: "Reservation is already cancelled",
+                Errors:  err.Error(),
             })
         }
         return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-            Code:    http.StatusInternalServerError,
+            Success: false,
             Message: "Failed to cancel reservation",
-            Details: err.Error(),
+            Errors:  err.Error(),
         })
     }
 
-    return c.JSON(http.StatusOK, map[string]string{
-        "message": "Reservation cancelled successfully",
+    return c.JSON(http.StatusOK, httpresponse.SuccessResponse{
+        Success: true,
+        Message: "Reservation cancelled successfully",
+        Data:    nil,
     })
 }

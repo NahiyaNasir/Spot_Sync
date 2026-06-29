@@ -1,6 +1,11 @@
 package httpresponse
 type ErrorResponse struct {
-	Code int `json:"code"`
-	Message string `json:"message"`
-Details string `json:"details,omitempty"`
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Errors  interface{} `json:"errors"`
+}
+type SuccessResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }

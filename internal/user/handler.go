@@ -24,37 +24,41 @@ func (h *Handler) CreateUser(c *echo.Context) error {
 	var req dto.RegisterUserRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-			Code:    http.StatusBadRequest,
+			Success: false,
 			Message: "Invalid request body",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
 	response, err := h.service.CreateUser(&req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-			Code:    http.StatusInternalServerError,
+			Success: false,
 			Message: "Failed to create user",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
-	return c.JSON(http.StatusCreated, response)
+	return c.JSON(http.StatusCreated, httpresponse.SuccessResponse{
+		Success: true,
+		Message: "User created successfully",
+		Data:    response,
+	})
 }
  func (h *Handler) LoginUser(c *echo.Context) error {
 	var req dto.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-			Code:    http.StatusBadRequest,
+			Success: false,
 			Message: "Invalid request payload",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
 
 	if err := c.Validate(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, httpresponse.ErrorResponse{
-			Code:    http.StatusBadRequest,
+			Success: false,
 			Message: "Validation failed",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
 
@@ -63,28 +67,32 @@ func (h *Handler) CreateUser(c *echo.Context) error {
 	if err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
 			return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-				Code:    http.StatusUnauthorized,
+				Success: false,
 				Message: "Cannot login user",
-				Details: err.Error(),
+				Errors:  err.Error(),
 			})
 		}
 
 		return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-			Code:    http.StatusInternalServerError,
+			Success: false,
 			Message: "Failed to login user",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, httpresponse.SuccessResponse{
+		Success: true,
+		Message: "User logged in successfully",
+		Data:    response,
+	})
 }
 func (h *Handler) GetMe(c *echo.Context) error {
 	userID, ok := c.Get("user_id").(uint)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, httpresponse.ErrorResponse{
-			Code:    http.StatusUnauthorized,
+			Success: false,
 			Message: "Cannot get user information",
-			Details: "missing user id in context",
+			Errors:  "missing user id in context",
 		})
 	}
 
@@ -102,12 +110,16 @@ func (h *Handler) GetMe(c *echo.Context) error {
 	users, err := h.service.GetAllUsers()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, httpresponse.ErrorResponse{
-			Code:    http.StatusInternalServerError,
+			Success: false,
 			Message: "Failed to retrieve users",
-			Details: err.Error(),
+			Errors:  err.Error(),
 		})
 	}
-	return c.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, httpresponse.SuccessResponse{
+		Success: true,
+		Message: "Users retrieved successfully",
+		Data:    users,
+	})
 }
 
 func (h *Handler) Update(c *echo.Context) error {

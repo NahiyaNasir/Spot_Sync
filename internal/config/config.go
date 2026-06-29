@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Port string `json:"port"`
 	Dsn string `json:"dsn"`
+	jwtSecret string 
 }
 func LoadEnv()	(*Config) {
 	err := godotenv.Load()
@@ -17,5 +18,6 @@ func LoadEnv()	(*Config) {
 	return &Config{
 		Port: os.Getenv("PORT"),
 		Dsn: os.Getenv("DSN"),
+		jwtSecret: os.Getenv("JWT_SECRET"),
 	}
 }
