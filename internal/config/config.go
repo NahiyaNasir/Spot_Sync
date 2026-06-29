@@ -13,7 +13,7 @@ type Config struct {
 func LoadEnv()	(*Config) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		 log.Println("No .env file found, using environment variables")
 	}
 	return &Config{
 		Port: os.Getenv("PORT"),
